@@ -101,17 +101,16 @@ ollama pull codellama
 agentchat/
 ├── app/
 │   ├── __init__.py
-│   ├── main.py          # FastAPI application
+│   ├── main.py          # FastAPI application entry point
 │   ├── api.py           # API routes and WebSocket handling
-│   ├── services.py      # Ollama service and LLM wrapper
-│   └── models.py        # Data models (empty for now)
+│   └── services.py      # Ollama service and LLM wrapper
 ├── templates/
 │   └── index.html       # Main HTML interface
 ├── static/
 │   ├── style.css        # CSS styling
 │   └── script.js        # JavaScript WebSocket client
 ├── pyproject.toml       # Project dependencies
-├── main.py              # Entry point
+├── .gitignore           # Git ignore rules
 └── README.md           # This file
 ```
 
@@ -154,6 +153,8 @@ pip install -e ".[dev]"
 # Run with auto-reload
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
+
+**Note**: You can also run the application using `python -m app.main` as shown in the installation steps.
 
 ### Code Style
 
