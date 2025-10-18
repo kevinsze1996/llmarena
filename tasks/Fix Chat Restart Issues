@@ -1,0 +1,105 @@
+# Fix Chat Restart Issues
+
+## Problems Identified
+1. **Status stuck on "Ready"**: After stop/restart, tab stays "Ready" instead of showing "Thinking..."
+2. **llama3.2 timeout**: Model consistently times out at 60s, causing chat to auto-stop
+3. **Potential race conditions**: Old async tasks might send messages to new sessions
+4. **Duplicate messages**: Two messages in a row from first model after restart
+
+## Tasks
+- [x] Add session_id validation to message filtering
+- [x] Clear status queue on chat start
+- [x] Increase timeout for llama3.2 model
+- [x] Strengthen async task cleanup
+
+## Changes Made
+
+### 1. Added session_id validation (app/api.py:78-81)
+**File**: `app/api.py`
+**Location**: `send_personal_message()` method
+
+- Modified to validate both `session_id` and `generation` before sending messages
+- Prevents stale messages from old sessions being sent to new sessions
+- Old tasks from previous sessions will be filtered out
+
+```python
+# Validate session_id and generation if provided in message
+if "session_id" in message:
+    if message["session_id"] != chat_session.session_id:
+        logger.info(f"Filtering stale message: session_id {message['session_id']} != current {chat_session.session_id}")
+        return
+```
+
+### 2. Clear status queue on chat start (static/script.js:223-240)
+**File**: `static/script.js`
+**Location**: `handleChatStarted()` method
+
+- Clear `currentStatusTimeout`, `statusUpdateTimer`, and `statusUpdateQueue` on chat start
+- Ensures old queued status updates don't interfere with new session
+- Allows "Thinking..." status from backend to display immediately
+
+```javascript
+// Clear status queue and timers to ensure fresh start
+if (this.currentStatusTimeout) {
+    clearTimeout(this.currentStatusTimeout);
+    this.currentStatusTimeout = null;
+}
+if (this.statusUpdateTimer) {
+    clearTimeout(this.statusUpdateTimer);
+    this.statusUpdateTimer = null;
+}
+this.statusUpdateQueue = [];
+```
+
+### 3. Increase timeout for llama3.2 (app/services.py:181)
+**File**: `app/services.py`
+**Location**: `get_model_timeout()` function
+
+- Added "llama3.2" to `large_model_patterns` list
+- Increases timeout from 60s to 180s (3 minutes)
+- Prevents premature timeouts for this slower model
+
+### 4. Strengthen async task cleanup (app/api.py:422-433)
+**File**: `app/api.py`
+**Location**: `run_conversation_turn()` check_cancelled callback
+
+- Enhanced `check_cancelled()` callback to verify session_id hasn't changed
+- Ensures LLM requests are cancelled if session is replaced during execution
+- Provides additional protection against race conditions
+
+```python
+def check_cancelled():
+    if connection_id not in manager.chat_sessions:
+        raise asyncio.CancelledError("Session was removed")
+
+    current_session = manager.chat_sessions[connection_id]
+
+    # Check if session was replaced (different session_id)
+    if current_session.session_id != original_session_id:
+        raise asyncio.CancelledError("Session was replaced with new session")
+
+    if not current_session.is_running:
+        raise asyncio.CancelledError("Chat was stopped by user")
+```
+
+## Review
+
+### Root Causes
+1. **Status Queue Not Cleared**: When restarting chat, old status updates remained queued, blocking new "Thinking..." updates
+2. **Insufficient Timeout**: llama3.2 model needs more than 60s to respond consistently
+3. **Weak Session Validation**: Backend only checked generation, not session_id, allowing potential message leakage
+4. **LLM Request Race Condition**: Old LLM requests could continue even after session replacement
+
+### Solutions Applied
+All fixes are minimal and focused on specific issues:
+1. **Frontend**: Clear status queue on chat start (without forcing "Ready" state)
+2. **Backend**: Validate both session_id and generation for message filtering
+3. **Backend**: Extend timeout for slow models like llama3.2
+4. **Backend**: Add session_id check to cancellation callback during LLM requests
+
+### Expected Behavior After Fixes
+✅ "Thinking..." status displays correctly when restarting chat
+✅ llama3.2 model has adequate time to respond (180s instead of 60s)
+✅ Old async tasks can't send messages to new sessions
+✅ Stop button works reliably after restart
+✅ No duplicate messages from stale sessions

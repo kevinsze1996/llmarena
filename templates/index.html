@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Chat</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>LLM Chat Arena</h1>
+            <p>Watch two AI models chat with each other</p>
+        </header>
+
+        <div class="controls">
+            <div class="model-selects">
+                <div class="model-select">
+                    <label for="model1">Model 1:</label>
+                    <select id="model1" required>
+                        <option value="">Select a model...</option>
+                    </select>
+                </div>
+                <div class="model-select">
+                    <label for="model2">Model 2:</label>
+                    <select id="model2" required>
+                        <option value="">Select a model...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="system-prompts">
+                <div class="prompt-input">
+                    <label for="system1">System Prompt 1:</label>
+                    <textarea id="system1" rows="3" placeholder="Enter system prompt for Model 1..."></textarea>
+                </div>
+                <div class="prompt-input">
+                    <label for="system2">System Prompt 2:</label>
+                    <textarea id="system2" rows="3" placeholder="Enter system prompt for Model 2..."></textarea>
+                </div>
+            </div>
+
+            <div class="chat-controls">
+                <div class="initial-message">
+                    <label for="initialMessage">Initial Message:</label>
+                    <input type="text" id="initialMessage" value="Hello! Let's have an interesting conversation." placeholder="Enter initial message...">
+                </div>
+                <div class="buttons">
+                    <button id="startBtn" class="btn btn-primary">Start Chat</button>
+                    <button id="stopBtn" class="btn btn-danger" disabled>Stop Chat</button>
+                    <button id="clearBtn" class="btn btn-secondary">Clear Chat</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-panel" id="chat1">
+                <div class="chat-header">
+                    <h3 id="model1Name">Model 1</h3>
+                    <span class="status" id="status1">Ready</span>
+                </div>
+                <div class="chat-messages" id="messages1"></div>
+            </div>
+
+            <div class="chat-panel" id="chat2">
+                <div class="chat-header">
+                    <h3 id="model2Name">Model 2</h3>
+                    <span class="status" id="status2">Ready</span>
+                </div>
+                <div class="chat-messages" id="messages2"></div>
+            </div>
+        </div>
+
+        <div class="error-container" id="errorContainer" style="display: none;">
+            <div class="error-message" id="errorMessage"></div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
