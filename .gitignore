@@ -11,3 +11,4 @@ wheels/
 
 # self created folders
 tasks/
+.DS_Store
